@@ -51,7 +51,13 @@ def parse_option():
     # model dataset
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--dataset', type=str, default='cifar10',
-                        choices=['cifar10', 'cifar100'], help='dataset')
+                        choices=['cifar10', 'cifar100', 'path'], help='dataset')
+    parser.add_argument('--mean', type=str, help='mean of dataset in path in form of str tuple')
+    parser.add_argument('--std', type=str, help='std of dataset in path in form of str tuple')
+    parser.add_argument('--data_folder', type=str, default=None, help='path to custom dataset (train)')
+    parser.add_argument('--val_folder', type=str, default=None, help='path to custom dataset (val/test)')
+    parser.add_argument('--size', type=int, default=32, help='parameter for RandomResizedCrop')
+    parser.add_argument('--n_cls', type=int, default=10, help='number of classes for custom dataset')
 
     # other setting
     parser.add_argument('--cosine', action='store_true',
@@ -65,8 +71,16 @@ def parse_option():
 
     opt = parser.parse_args()
 
+    # check if dataset is path that passed required arguments
+    if opt.dataset == 'path':
+        assert opt.data_folder is not None \
+            and opt.val_folder is not None \
+            and opt.mean is not None \
+            and opt.std is not None
+
     # set the path according to the environment
-    opt.data_folder = './datasets/'
+    if opt.data_folder is None:
+        opt.data_folder = './datasets/'
     opt.model_path = '/kaggle/working/save/SupCon/{}_models'.format(opt.dataset)
 
     iterations = opt.lr_decay_epochs.split(',')
@@ -103,6 +117,8 @@ def parse_option():
         opt.n_cls = 10
     elif opt.dataset == 'cifar100':
         opt.n_cls = 100
+    elif opt.dataset == 'path':
+        pass # n_cls is passed as argument
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
 
@@ -117,12 +133,15 @@ def set_loader(opt):
     elif opt.dataset == 'cifar100':
         mean = (0.5071, 0.4867, 0.4408)
         std = (0.2675, 0.2565, 0.2761)
+    elif opt.dataset == 'path':
+        mean = eval(opt.mean)
+        std = eval(opt.std)
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
     normalize = transforms.Normalize(mean=mean, std=std)
 
     train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=32, scale=(0.2, 1.)),
+        transforms.RandomResizedCrop(size=opt.size if hasattr(opt, 'size') else 32, scale=(0.2, 1.)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize,
@@ -147,6 +166,11 @@ def set_loader(opt):
         val_dataset = datasets.CIFAR100(root=opt.data_folder,
                                         train=False,
                                         transform=val_transform)
+    elif opt.dataset == 'path':
+        train_dataset = datasets.ImageFolder(root=opt.data_folder,
+                                             transform=train_transform)
+        val_dataset = datasets.ImageFolder(root=opt.val_folder,
+                                           transform=val_transform)
     else:
         raise ValueError(opt.dataset)
 

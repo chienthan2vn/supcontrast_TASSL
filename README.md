@@ -104,20 +104,43 @@ python main_linear.py --batch_size 512 \
 ```
 
 On custom dataset:
-```
-python main_supcon.py --batch_size 1024 \
-  --learning_rate 0.5  \ 
+
+**1. Pretraining (SupCon or SimCLR):**
+```bash
+python main_supcon.py --batch_size 256 \
+  --learning_rate 0.5 \
   --temp 0.1 --cosine \
   --dataset path \
-  --data_folder ./path \
-  --mean "(0.4914, 0.4822, 0.4465)" \
-  --std "(0.2675, 0.2565, 0.2761)" \
-  --method SimCLR
+  --data_folder /path/to/train \
+  --mean "(0.485, 0.456, 0.406)" \
+  --std "(0.229, 0.224, 0.225)" \
+  --model efficientnet_b0 \
+  --method SupCon
+```
+*The `--data_folder` must follow the `torchvision.datasets.ImageFolder` convention (i.e., `./path/class_name/image.png`).*
+
+**2. Linear Evaluation:**
+```bash
+python main_linear.py --batch_size 256 \
+  --learning_rate 5 \
+  --dataset path \
+  --data_folder /path/to/train \
+  --val_folder /path/to/val \
+  --mean "(0.485, 0.456, 0.406)" \
+  --std "(0.229, 0.224, 0.225)" \
+  --n_cls 27 \
+  --model efficientnet_b0 \
+  --ckpt /kaggle/working/save/SupCon/.../last.pth
 ```
 
-The `--data_folder` must be of form ./path/label/xxx.png folowing https://pytorch.org/docs/stable/torchvision/datasets.html#torchvision.datasets.ImageFolder convension.
+### Updates & Customizations
 
-and 
+* **Timm Library Support:** You can pass any model from the `timm` package (e.g., `efficientnet_b0`, `resnet10t.c3_in1k`) via the `--model` argument. The code will automatically load it and attach the proper Projection Head/Linear Classifier.
+* **Kaggle Optimizations:**
+  * Model checkpoints are automatically saved to `/kaggle/working/save/...` to persist outputs.
+  * The `tensorboard_logger` dependency was removed for native Kaggle compatibility.
+  * *Tip:* Always use `--num_workers 4` (or fewer) on Kaggle to prevent CPU freezes.
+
 ## t-SNE Visualization
 
 **(1) Standard Cross-Entropy**
