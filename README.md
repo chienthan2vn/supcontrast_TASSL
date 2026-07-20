@@ -128,7 +128,6 @@ python main_linear.py --batch_size 256 \
   --val_folder /path/to/val \
   --mean "(0.485, 0.456, 0.406)" \
   --std "(0.229, 0.224, 0.225)" \
-  --n_cls 27 \
   --model efficientnet_b0 \
   --ckpt /kaggle/working/save/SupCon/.../last.pth
 ```

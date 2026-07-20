@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import sys
 import argparse
 import time
@@ -109,7 +110,8 @@ def parse_option():
     elif opt.dataset == 'cifar100':
         opt.n_cls = 100
     elif opt.dataset == 'path':
-        pass # n_cls is passed as argument
+        classes = [d for d in os.listdir(opt.data_folder) if os.path.isdir(os.path.join(opt.data_folder, d))]
+        opt.n_cls = len(classes)
     else:
         raise ValueError('dataset not supported: {}'.format(opt.dataset))
 
