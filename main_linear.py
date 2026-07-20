@@ -5,6 +5,8 @@ import sys
 import argparse
 import time
 import math
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -212,6 +214,9 @@ def validate(val_loader, model, classifier, criterion, opt):
     losses = AverageMeter()
     top1 = AverageMeter()
 
+    all_preds = []
+    all_targets = []
+
     with torch.no_grad():
         end = time.time()
         for idx, (images, labels) in enumerate(val_loader):
@@ -228,6 +233,10 @@ def validate(val_loader, model, classifier, criterion, opt):
             acc1, acc5 = accuracy(output, labels, topk=(1, 5))
             top1.update(acc1[0], bsz)
 
+            _, pred = output.topk(1, 1, True, True)
+            all_preds.append(pred.cpu().numpy())
+            all_targets.append(labels.cpu().numpy())
+
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
@@ -240,7 +249,14 @@ def validate(val_loader, model, classifier, criterion, opt):
                        idx, len(val_loader), batch_time=batch_time,
                        loss=losses, top1=top1))
 
-    print(' * Acc@1 {top1.avg:.3f}'.format(top1=top1))
+    all_preds = np.concatenate(all_preds).squeeze()
+    all_targets = np.concatenate(all_targets)
+    precision = precision_score(all_targets, all_preds, average='macro', zero_division=0)
+    recall = recall_score(all_targets, all_preds, average='macro', zero_division=0)
+    f1 = f1_score(all_targets, all_preds, average='macro', zero_division=0)
+
+    print(' * Acc@1 {top1.avg:.3f} | Precision: {precision:.3f} | Recall: {recall:.3f} | F1: {f1:.3f}'.format(
+        top1=top1, precision=precision, recall=recall, f1=f1))
     return losses.avg, top1.avg
 
 
