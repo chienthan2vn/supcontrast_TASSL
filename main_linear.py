@@ -152,7 +152,7 @@ def set_model(opt):
 
 def train(train_loader, model, classifier, criterion, optimizer, epoch, opt):
     """one epoch training"""
-    model.train()
+    model.eval()
     classifier.train()
 
     batch_time = AverageMeter()
