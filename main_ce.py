@@ -148,10 +148,19 @@ def set_loader(opt):
         normalize,
     ])
 
-    val_transform = transforms.Compose([
-        transforms.ToTensor(),
-        normalize,
-    ])
+    if opt.dataset == 'path':
+        size = opt.size if hasattr(opt, 'size') else 32
+        val_transform = transforms.Compose([
+            transforms.Resize(int(size * (256 / 224))),
+            transforms.CenterCrop(size),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        val_transform = transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ])
 
     if opt.dataset == 'cifar10':
         train_dataset = datasets.CIFAR10(root=opt.data_folder,
