@@ -174,7 +174,7 @@ class SupConResNet(nn.Module):
             import timm
             self.encoder = timm.create_model(name, pretrained=True, num_classes=0)
             # Dynamically get output dimension of timm models
-            dim_in = self.encoder.conv_head.out_channels
+            dim_in = self.encoder.num_features
 
         if head == 'linear':
             self.head = nn.Linear(dim_in, feat_dim)
@@ -205,7 +205,7 @@ class SupCEResNet(nn.Module):
         else:
             import timm
             self.encoder = timm.create_model(name, pretrained=True, num_classes=0)
-            dim_in = self.encoder.conv_head.out_channels
+            dim_in = self.encoder.num_features
 
         self.fc = nn.Linear(dim_in, num_classes)
 
@@ -224,7 +224,7 @@ class LinearClassifier(nn.Module):
             # We need to get the dim for the timm model to initialize the linear classifier
             import timm
             temp_model = timm.create_model(name, pretrained=False, num_classes=0)
-            feat_dim = temp_model.conv_head.out_channels
+            feat_dim = temp_model.num_features
             del temp_model
 
         self.fc = nn.Linear(feat_dim, num_classes)
