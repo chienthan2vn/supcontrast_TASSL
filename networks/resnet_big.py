@@ -173,16 +173,8 @@ class SupConResNet(nn.Module):
         else:
             import timm
             self.encoder = timm.create_model(name, pretrained=True, num_classes=0)
-            # Try to dynamically get output dimension of timm models
-            if hasattr(self.encoder, 'num_features'):
-                dim_in = self.encoder.num_features
-            elif hasattr(self.encoder, 'conv_head'):
-                dim_in = self.encoder.conv_head.out_channels
-            else:
-                # Fallback: dummy forward pass to infer dimension
-                import torch
-                dummy_input = torch.zeros(1, 3, 224, 224)
-                dim_in = self.encoder(dummy_input).shape[1]
+            # Dynamically get output dimension of timm models
+            dim_in = self.encoder.conv_head.out_channels
 
         if head == 'linear':
             self.head = nn.Linear(dim_in, feat_dim)
@@ -213,14 +205,7 @@ class SupCEResNet(nn.Module):
         else:
             import timm
             self.encoder = timm.create_model(name, pretrained=True, num_classes=0)
-            if hasattr(self.encoder, 'num_features'):
-                dim_in = self.encoder.num_features
-            elif hasattr(self.encoder, 'conv_head'):
-                dim_in = self.encoder.conv_head.out_channels
-            else:
-                import torch
-                dummy_input = torch.zeros(1, 3, 224, 224)
-                dim_in = self.encoder(dummy_input).shape[1]
+            dim_in = self.encoder.conv_head.out_channels
 
         self.fc = nn.Linear(dim_in, num_classes)
 
@@ -239,14 +224,7 @@ class LinearClassifier(nn.Module):
             # We need to get the dim for the timm model to initialize the linear classifier
             import timm
             temp_model = timm.create_model(name, pretrained=False, num_classes=0)
-            if hasattr(temp_model, 'num_features'):
-                feat_dim = temp_model.num_features
-            elif hasattr(temp_model, 'conv_head'):
-                feat_dim = temp_model.conv_head.out_channels
-            else:
-                import torch
-                dummy_input = torch.zeros(1, 3, 224, 224)
-                feat_dim = temp_model(dummy_input).shape[1]
+            feat_dim = temp_model.conv_head.out_channels
             del temp_model
 
         self.fc = nn.Linear(feat_dim, num_classes)
